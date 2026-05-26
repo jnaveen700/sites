@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
 import { API_BASE_URL } from '../../config/api';
@@ -12,6 +12,7 @@ export default function SimpleBatchUpload({ onBatchCreated }) {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const fileInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     price: '',
@@ -46,6 +47,10 @@ export default function SimpleBatchUpload({ onBatchCreated }) {
     e.stopPropagation();
     setDragActive(false);
     handleFiles(e.dataTransfer.files);
+  };
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
   };
 
   // Handle file selection from input
@@ -107,8 +112,10 @@ export default function SimpleBatchUpload({ onBatchCreated }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    const numericPrice = Number(String(formData.price).trim());
+
     // Validate
-    if (!formData.price || formData.price <= 0) {
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
       setError(isTelugu ? 'ధర అవసరమైనది' : 'Price is required');
       return;
     }
@@ -125,7 +132,7 @@ export default function SimpleBatchUpload({ onBatchCreated }) {
 
       // Create FormData
       const uploadFormData = new FormData();
-      uploadFormData.append('price', formData.price);
+      uploadFormData.append('price', String(numericPrice));
       if (formData.title.trim()) {
         uploadFormData.append('title', formData.title.trim());
       }
@@ -278,6 +285,15 @@ export default function SimpleBatchUpload({ onBatchCreated }) {
           onDragLeave={handleDrag}
           onDragOver={handleDrag}
           onDrop={handleDrop}
+          onClick={openFilePicker}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openFilePicker();
+            }
+          }}
         >
           <div className="upload-zone-content">
             <p className="upload-icon">📸</p>
@@ -296,6 +312,7 @@ export default function SimpleBatchUpload({ onBatchCreated }) {
               accept="image/*"
               onChange={handleFileSelect}
               className="file-input"
+              ref={fileInputRef}
             />
           </div>
         </div>

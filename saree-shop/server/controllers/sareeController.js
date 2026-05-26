@@ -158,6 +158,13 @@ export const createSaree = async (req, res) => {
       season,
     } = req.body;
 
+    const numericRetailPrice = Number(String(retailPrice).trim());
+    const numericWholesalePrice = Number(String(wholesalePrice).trim());
+    const numericStock = Number(String(stock).trim());
+    const numericMinOrderQuantity = minOrderQuantity !== undefined
+      ? Number(String(minOrderQuantity).trim())
+      : 1;
+
     // Validate required fields
     if (
       !designName ||
@@ -184,7 +191,14 @@ export const createSaree = async (req, res) => {
       });
     }
 
-    if (wholesalePrice > retailPrice) {
+    if (!Number.isFinite(numericRetailPrice) || !Number.isFinite(numericWholesalePrice) || !Number.isFinite(numericStock)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Retail price, wholesale price, and stock must be valid numbers',
+      });
+    }
+
+    if (numericWholesalePrice > numericRetailPrice) {
       return res.status(400).json({
         success: false,
         message: 'Wholesale price cannot be higher than retail price',
@@ -255,16 +269,16 @@ export const createSaree = async (req, res) => {
     const newSaree = new Saree({
       designName,
       description,
-      retailPrice: parseFloat(retailPrice),
-      wholesalePrice: parseFloat(wholesalePrice),
+      retailPrice: numericRetailPrice,
+      wholesalePrice: numericWholesalePrice,
       color,
       material,
       pattern,
-      stock: parseInt(stock),
-      minOrderQuantity: minOrderQuantity ? parseInt(minOrderQuantity) : 1,
+      stock: numericStock,
+      minOrderQuantity: Number.isFinite(numericMinOrderQuantity) && numericMinOrderQuantity > 0 ? numericMinOrderQuantity : 1,
       season: season || 'all-season',
       images,
-      status: stock > 0 ? 'in-stock' : 'out-of-stock',
+      status: numericStock > 0 ? 'in-stock' : 'out-of-stock',
       createdBy: req.user.id,
     });
 
@@ -328,6 +342,16 @@ export const updateSaree = async (req, res) => {
     const { deleteImages } = req.body;
     const updates = req.body;
 
+    const parsedRetailPrice = updates.retailPrice !== undefined
+      ? Number(String(updates.retailPrice).trim())
+      : undefined;
+    const parsedWholesalePrice = updates.wholesalePrice !== undefined
+      ? Number(String(updates.wholesalePrice).trim())
+      : undefined;
+    const parsedStock = updates.stock !== undefined
+      ? Number(String(updates.stock).trim())
+      : undefined;
+
     delete updates.images;
     delete updates.deleteImages;
 
@@ -338,6 +362,26 @@ export const updateSaree = async (req, res) => {
         success: false,
         message: 'Saree not found',
       });
+    }
+
+    const nextRetailPrice = parsedRetailPrice !== undefined ? parsedRetailPrice : saree.retailPrice;
+    const nextWholesalePrice = parsedWholesalePrice !== undefined ? parsedWholesalePrice : saree.wholesalePrice;
+
+    if ((parsedRetailPrice !== undefined && (!Number.isFinite(parsedRetailPrice) || parsedRetailPrice <= 0)) ||
+        (parsedWholesalePrice !== undefined && (!Number.isFinite(parsedWholesalePrice) || parsedWholesalePrice <= 0))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Retail price and wholesale price must be valid positive numbers',
+      });
+    }
+
+    if (parsedWholesalePrice !== undefined || parsedRetailPrice !== undefined) {
+      if (nextWholesalePrice > nextRetailPrice) {
+        return res.status(400).json({
+          success: false,
+          message: 'Wholesale price cannot be higher than retail price',
+        });
+      }
     }
 
     // Handle image deletion
@@ -374,13 +418,30 @@ export const updateSaree = async (req, res) => {
 
     // Update status based on stock if not explicitly set
     if (updates.stock !== undefined) {
-      if (updates.stock <= 0) {
+      if (!Number.isFinite(parsedStock)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Stock must be a valid number',
+        });
+      }
+
+      updates.stock = parsedStock;
+
+      if (parsedStock <= 0) {
         updates.status = 'out-of-stock';
-      } else if (updates.stock < 5) {
+      } else if (parsedStock < 5) {
         updates.status = 'low-stock';
       } else {
         updates.status = 'in-stock';
       }
+    }
+
+    if (parsedRetailPrice !== undefined) {
+      updates.retailPrice = parsedRetailPrice;
+    }
+
+    if (parsedWholesalePrice !== undefined) {
+      updates.wholesalePrice = parsedWholesalePrice;
     }
 
     // Apply other updates

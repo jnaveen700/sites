@@ -6,7 +6,9 @@
   "main": "server.js",
   "scripts": {
     "dev": "nodemon server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "create-admin": "node scripts/createAdmin.js",
+    "update-admin": "node scripts/updateAdmin.js"
   },
   "keywords": [
     "wholesale",

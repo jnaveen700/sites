@@ -49,6 +49,8 @@ export default function EditSaree({ sareeId, onComplete }) {
     { en: 'Woven', te: 'నేయబడిన' },
   ];
 
+  const toNumber = (value) => Number(String(value).trim());
+
   // Fetch saree data
   useEffect(() => {
     const fetchSaree = async () => {
@@ -188,8 +190,27 @@ export default function EditSaree({ sareeId, onComplete }) {
     setError('');
     setSuccess('');
 
+    const retailPrice = toNumber(formData.retailPrice);
+    const wholesalePrice = toNumber(formData.wholesalePrice);
+    const stock = toNumber(formData.stock);
+
     if (images.length + newImages.length === 0) {
       setError(isTelugu ? 'కనీసం 1 చిత్రం అవసరం' : 'At least 1 image required');
+      return;
+    }
+
+    if (!Number.isFinite(retailPrice) || !Number.isFinite(wholesalePrice) || !Number.isFinite(stock)) {
+      setError(isTelugu ? 'ధరలు మరియు స్టాక్ సరైన సంఖ్యలు కావాలి' : 'Prices and stock must be valid numbers');
+      return;
+    }
+
+    if (retailPrice <= 0 || wholesalePrice <= 0 || stock < 0) {
+      setError(isTelugu ? 'ధరలు మరియు స్టాక్ సరైనవి కావాలి' : 'Prices and stock must be valid');
+      return;
+    }
+
+    if (wholesalePrice > retailPrice) {
+      setError(isTelugu ? 'బందీ ధర రీటెయిల్ ధర కంటే తక్కువగా ఉండాలి' : 'Wholesale price must be lower than retail price');
       return;
     }
 
@@ -208,9 +229,9 @@ export default function EditSaree({ sareeId, onComplete }) {
       uploadFormData.append('patternTelugu', formData.patternTelugu);
       uploadFormData.append('color', formData.color);
       uploadFormData.append('colorTelugu', formData.colorTelugu);
-      uploadFormData.append('retailPrice', parseFloat(formData.retailPrice));
-      uploadFormData.append('wholesalePrice', parseFloat(formData.wholesalePrice));
-      uploadFormData.append('stock', parseInt(formData.stock));
+      uploadFormData.append('retailPrice', String(retailPrice));
+      uploadFormData.append('wholesalePrice', String(wholesalePrice));
+      uploadFormData.append('stock', String(stock));
 
       // Existing images to keep
       images.forEach(img => {

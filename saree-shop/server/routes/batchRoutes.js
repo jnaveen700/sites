@@ -8,7 +8,7 @@ import {
   archiveBatch,
 } from '../controllers/batchController.js';
 import authMiddleware from '../middleware/authMiddleware.js';
-import roleMiddleware from '../middleware/roleMiddleware.js';
+import { authorizeRoles } from '../middleware/roleMiddleware.js';
 import uploadMiddleware from '../middleware/uploadMiddleware.js';
 
 const router = express.Router();
@@ -21,7 +21,7 @@ const router = express.Router();
 router.post(
   '/',
   authMiddleware,
-  roleMiddleware('admin'),
+  authorizeRoles('admin'),
   uploadMiddleware.array('images', 50), // Max 50 images per batch
   createBatch
 );
@@ -52,7 +52,7 @@ router.get('/:id', getBatchById);
 router.put(
   '/:id',
   authMiddleware,
-  roleMiddleware('admin'),
+  authorizeRoles('admin'),
   updateBatch
 );
 
@@ -63,7 +63,7 @@ router.put(
 router.delete(
   '/:id',
   authMiddleware,
-  roleMiddleware('admin'),
+  authorizeRoles('admin'),
   deleteBatch
 );
 
@@ -74,7 +74,7 @@ router.delete(
 router.patch(
   '/:id/archive',
   authMiddleware,
-  roleMiddleware('admin'),
+  authorizeRoles('admin'),
   archiveBatch
 );
 

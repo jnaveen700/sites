@@ -6,9 +6,10 @@ export const createBatch = async (req, res) => {
   try {
     const { price, title, category, description } = req.body;
     const createdBy = req.user.id; // Use req.user.id (set by auth middleware)
+    const numericPrice = Number(String(price).trim());
 
     // Validate price
-    if (!price || price <= 0) {
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
       return res.status(400).json({
         success: false,
         message: 'Price must be a positive number',
@@ -43,7 +44,7 @@ export const createBatch = async (req, res) => {
 
     // Create new batch
     const newBatch = new SareeBatch({
-      price: parseFloat(price),
+      price: numericPrice,
       title: title && title.trim() ? title.trim() : null,
       category: category || 'Other',
       description: description && description.trim() ? description.trim() : null,
@@ -175,6 +176,7 @@ export const updateBatch = async (req, res) => {
   try {
     const { id } = req.params;
     const { title, category, description, price, status } = req.body;
+    const numericPrice = price !== undefined ? Number(String(price).trim()) : undefined;
 
     // Find batch
     const batch = await SareeBatch.findById(id);
@@ -189,7 +191,16 @@ export const updateBatch = async (req, res) => {
     if (title !== undefined) batch.title = title && title.trim() ? title.trim() : null;
     if (category !== undefined) batch.category = category || 'Other';
     if (description !== undefined) batch.description = description && description.trim() ? description.trim() : null;
-    if (price !== undefined) batch.price = parseFloat(price);
+    if (price !== undefined) {
+      if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Price must be a positive number',
+        });
+      }
+
+      batch.price = numericPrice;
+    }
     if (status !== undefined) batch.status = status;
 
     // Save
