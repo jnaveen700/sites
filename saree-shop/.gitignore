@@ -12,16 +12,29 @@ build/
 *.log
 logs/
 
-# Environment files
+# Environment files - SECURITY: NEVER commit credentials
 .env
-.env.*
+.env.local
+.env.*.local
+.env.production
+.env.development
 **/.env
-**/.env.*
 **/.env.local
-**/.env.*.local
+**/.env.production
+**/.env.development
+
+# Uploads and files
+uploads/
+**/uploads/
 
 # OS and editor files
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# IDE
 .vscode/
 .idea/
