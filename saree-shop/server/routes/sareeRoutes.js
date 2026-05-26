@@ -24,7 +24,7 @@ const router = express.Router();
  * COMPLETE UPLOAD FLOW CHAIN:
  * 
  * 1. ADMIN CLIENT → sends POST request
- *    Endpoint: http://localhost:5000/api/sarees
+ *    Endpoint: /api/sarees
  *    Content-Type: multipart/form-data
  *    Body:
  *    - images: [multiple files selected from phone]
@@ -165,7 +165,7 @@ const router = express.Router();
  * formData.append('color', 'Red');
  * formData.append('stock', '50');
  * 
- * fetch('http://localhost:5000/api/sarees', {
+ * fetch('/api/sarees', {
  *   method: 'POST',
  *   headers: {
  *     'Authorization': 'Bearer ' + token

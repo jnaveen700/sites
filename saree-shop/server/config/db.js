@@ -12,13 +12,12 @@ const connectDB = async () => {
   try {
     // Mongoose 7+ doesn't need useNewUrlParser or useUnifiedTopology
     const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log('[startup] Mongo connected');
     return conn;
   } catch (error) {
     // Log connection error
     console.error(`✗ MongoDB Connection Error: ${error.message}`);
-    
-    // Exit process if connection fails (critical error)
-    process.exit(1);
+    throw error;
   }
 };
 
