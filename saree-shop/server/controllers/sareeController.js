@@ -339,17 +339,66 @@ export const createSaree = async (req, res) => {
 export const updateSaree = async (req, res) => {
   try {
     const { id } = req.params;
-    const { deleteImages } = req.body;
-    const updates = req.body;
+    const rawDeleteImages = req.body.deleteImages;
+    const rawRetailPrice = req.body.retailPrice;
+    const rawWholesalePrice = req.body.wholesalePrice;
+    const rawStock = req.body.stock;
+    const allowedFields = [
+      'designName',
+      'designNameTelugu',
+      'description',
+      'descriptionTelugu',
+      'material',
+      'materialTelugu',
+      'pattern',
+      'patternTelugu',
+      'color',
+      'colorTelugu',
+      'season',
+      'status',
+    ];
 
-    const parsedRetailPrice = updates.retailPrice !== undefined
-      ? Number(String(updates.retailPrice).trim())
+    const updates = {};
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+
+    if (rawRetailPrice !== undefined) {
+      updates.retailPrice = rawRetailPrice;
+    }
+
+    if (rawWholesalePrice !== undefined) {
+      updates.wholesalePrice = rawWholesalePrice;
+    }
+
+    if (rawStock !== undefined) {
+      updates.stock = rawStock;
+    }
+
+    const deleteImages = Array.isArray(rawDeleteImages)
+      ? rawDeleteImages
+      : typeof rawDeleteImages === 'string' && rawDeleteImages.trim()
+        ? (() => {
+            try {
+              const parsed = JSON.parse(rawDeleteImages);
+              return Array.isArray(parsed) ? parsed : [];
+            } catch {
+              return rawDeleteImages.split(',').map((value) => value.trim()).filter(Boolean);
+            }
+          })()
+        : [];
+
+    const parsedRetailPrice = rawRetailPrice !== undefined
+      ? Number(String(rawRetailPrice).trim())
       : undefined;
-    const parsedWholesalePrice = updates.wholesalePrice !== undefined
-      ? Number(String(updates.wholesalePrice).trim())
+    const parsedWholesalePrice = rawWholesalePrice !== undefined
+      ? Number(String(rawWholesalePrice).trim())
       : undefined;
-    const parsedStock = updates.stock !== undefined
-      ? Number(String(updates.stock).trim())
+    const parsedStock = rawStock !== undefined
+      ? Number(String(rawStock).trim())
       : undefined;
 
     delete updates.images;
@@ -385,8 +434,12 @@ export const updateSaree = async (req, res) => {
     }
 
     // Handle image deletion
-    if (deleteImages && Array.isArray(deleteImages)) {
+    if (deleteImages.length > 0) {
       for (const publicId of deleteImages) {
+        if (!publicId) {
+          continue;
+        }
+
         try {
           await deleteImageFromCloudinary(publicId);
           saree.images = saree.images.filter((img) => img.public_id !== publicId);
@@ -444,8 +497,12 @@ export const updateSaree = async (req, res) => {
       updates.wholesalePrice = parsedWholesalePrice;
     }
 
-    // Apply other updates
-    Object.assign(saree, updates);
+    // Apply remaining updates without clobbering existing values
+    for (const [field, value] of Object.entries(updates)) {
+      if (value !== undefined && value !== null) {
+        saree[field] = value;
+      }
+    }
 
     await saree.save();
 

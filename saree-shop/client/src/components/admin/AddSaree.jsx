@@ -31,19 +31,19 @@ export default function AddSaree({ onAdded }) {
   });
 
   const materials = [
-    { en: 'Silk', te: 'పట్టు' },
-    { en: 'Cotton', te: 'కపాస' },
-    { en: 'Georgette', te: 'జార్జెట్' },
-    { en: 'Chiffon', te: 'చిఫన్' },
-    { en: 'Linen', te: 'లినెన్' },
+    { value: 'silk', en: 'Silk', te: 'పట్టు' },
+    { value: 'cotton', en: 'Cotton', te: 'కపాస' },
+    { value: 'georgette', en: 'Georgette', te: 'జార్జెట్' },
+    { value: 'chiffon', en: 'Chiffon', te: 'చిఫన్' },
+    { value: 'linen', en: 'Linen', te: 'లినెన్' },
   ];
 
   const patterns = [
-    { en: 'Plain', te: 'సాధారణ' },
-    { en: 'Striped', te: 'చారలున్న' },
-    { en: 'Printed', te: 'ముద్రిత' },
-    { en: 'Embroidered', te: 'కుట్టుకటం' },
-    { en: 'Woven', te: 'నేయబడిన' },
+    { value: 'plain', en: 'Plain', te: 'సాధారణ' },
+    { value: 'striped', en: 'Striped', te: 'చారలున్న' },
+    { value: 'printed', en: 'Printed', te: 'ముద్రిత' },
+    { value: 'embroidered', en: 'Embroidered', te: 'కుట్టుకటం' },
+    { value: 'woven', en: 'Woven', te: 'నేయబడిన' },
   ];
 
   const toNumber = (value) => Number(String(value).trim());
@@ -116,19 +116,19 @@ export default function AddSaree({ onAdded }) {
   };
 
   const handleMaterialChange = (e) => {
-    const material = materials.find(m => m.en === e.target.value);
+    const material = materials.find(m => m.value === e.target.value);
     setFormData(prev => ({
       ...prev,
-      material: material.en,
+      material: material.value,
       materialTelugu: material.te
     }));
   };
 
   const handlePatternChange = (e) => {
-    const pattern = patterns.find(p => p.en === e.target.value);
+    const pattern = patterns.find(p => p.value === e.target.value);
     setFormData(prev => ({
       ...prev,
-      pattern: pattern.en,
+      pattern: pattern.value,
       patternTelugu: pattern.te
     }));
   };
@@ -313,7 +313,7 @@ export default function AddSaree({ onAdded }) {
               <label>{isTelugu ? 'పదార్థం' : 'Material'}</label>
               <select value={formData.material} onChange={handleMaterialChange}>
                 {materials.map(m => (
-                  <option key={m.en} value={m.en}>
+                  <option key={m.value} value={m.value}>
                     {m.en} ({m.te})
                   </option>
                 ))}
@@ -324,7 +324,7 @@ export default function AddSaree({ onAdded }) {
               <label>{isTelugu ? 'నమూనా' : 'Pattern'}</label>
               <select value={formData.pattern} onChange={handlePatternChange}>
                 {patterns.map(p => (
-                  <option key={p.en} value={p.en}>
+                  <option key={p.value} value={p.value}>
                     {p.en} ({p.te})
                   </option>
                 ))}

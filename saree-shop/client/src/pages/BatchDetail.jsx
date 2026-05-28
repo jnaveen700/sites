@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useCart } from '../context/CartContext';
@@ -24,6 +24,7 @@ export default function BatchDetail() {
   const [saving, setSaving] = useState(false);
   const [adminMessage, setAdminMessage] = useState('');
   const [replacementImages, setReplacementImages] = useState([]);
+  const adminMessageRef = useRef(null);
   const [editForm, setEditForm] = useState({
     title: '',
     category: '',
@@ -40,7 +41,7 @@ export default function BatchDetail() {
         if (!response.ok) throw new Error('Failed to fetch batch details');
 
         const data = await response.json();
-        setBatch(data.batch || data.data);
+        setBatch(data.batch || data.data || data);
         setError('');
       } catch (err) {
         console.error('Error fetching batch:', err);
@@ -98,6 +99,12 @@ export default function BatchDetail() {
     });
   }, [batch]);
 
+  useEffect(() => {
+    if (adminMessage && adminMessageRef.current) {
+      adminMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [adminMessage]);
+
   const handleAddToCart = () => {
     if (batch) {
       addToCart({
@@ -153,7 +160,7 @@ export default function BatchDetail() {
         throw new Error(data?.message || 'Failed to update batch');
       }
 
-      setBatch(data.batch || batch);
+      setBatch(data.batch || data.data || batch);
       setIsEditing(false);
       setReplacementImages([]);
       setAdminMessage(isTelugu ? 'బ్యాచ్ నవీకరించబడింది' : 'Batch updated successfully');
@@ -368,7 +375,7 @@ export default function BatchDetail() {
                       {saving ? (isTelugu ? 'తొలగిస్తోంది...' : 'Deleting...') : (isTelugu ? 'బ్యాచ్ తొలగించండి' : 'Delete Batch')}
                     </button>
                   </div>
-                  {adminMessage && <p className="detail-admin-message">{adminMessage}</p>}
+                  {adminMessage && <p ref={adminMessageRef} className="detail-admin-message">{adminMessage}</p>}
                 </div>
 
                 {isEditing && (

@@ -1,9 +1,9 @@
 import { API_BASE_URL } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
 import { clearAuthSession, getAuthHeaders } from '../../utils/auth';
-import { getImageUrl } from '../../utils/imageHelpers';
+import { getImageUrl, normalizeImages } from '../../utils/imageHelpers';
 import '../../styles/EditSaree.css';
 
 export default function EditSaree({ sareeId, onComplete }) {
@@ -14,9 +14,11 @@ export default function EditSaree({ sareeId, onComplete }) {
   const [saree, setSaree] = useState(null);
   const [images, setImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
+  const [deletedImages, setDeletedImages] = useState([]);
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const alertRef = useRef(null);
 
   const [formData, setFormData] = useState({
     designName: '',
@@ -35,19 +37,19 @@ export default function EditSaree({ sareeId, onComplete }) {
   });
 
   const materials = [
-    { en: 'Silk', te: 'పట్టు' },
-    { en: 'Cotton', te: 'కపాస' },
-    { en: 'Georgette', te: 'జార్జెట్' },
-    { en: 'Chiffon', te: 'చిఫన్' },
-    { en: 'Linen', te: 'లినెన్' },
+    { value: 'silk', en: 'Silk', te: 'పట్టు' },
+    { value: 'cotton', en: 'Cotton', te: 'కపాస' },
+    { value: 'georgette', en: 'Georgette', te: 'జార్జెట్' },
+    { value: 'chiffon', en: 'Chiffon', te: 'చిఫన్' },
+    { value: 'linen', en: 'Linen', te: 'లినెన్' },
   ];
 
   const patterns = [
-    { en: 'Plain', te: 'సాధారణ' },
-    { en: 'Striped', te: 'చారలున్న' },
-    { en: 'Printed', te: 'ముద్రిత' },
-    { en: 'Embroidered', te: 'కుట్టుకటం' },
-    { en: 'Woven', te: 'నేయబడిన' },
+    { value: 'plain', en: 'Plain', te: 'సాధారణ' },
+    { value: 'striped', en: 'Striped', te: 'చారలున్న' },
+    { value: 'printed', en: 'Printed', te: 'ముద్రిత' },
+    { value: 'embroidered', en: 'Embroidered', te: 'కుట్టుకటం' },
+    { value: 'woven', en: 'Woven', te: 'నేయబడిన' },
   ];
 
   const toNumber = (value) => Number(String(value).trim());
@@ -59,6 +61,12 @@ export default function EditSaree({ sareeId, onComplete }) {
     console.log('New images:', newImages);
     console.groupEnd();
   }, [saree, images, newImages]);
+
+  useEffect(() => {
+    if (error && alertRef.current) {
+      alertRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [error]);
 
   // Fetch saree data
   useEffect(() => {
@@ -82,23 +90,25 @@ export default function EditSaree({ sareeId, onComplete }) {
         }
 
         if (response.ok) {
-          const data = await response.json();
-          setSaree(data);
-          setImages(data.images || []);
+          const payload = await response.json();
+          const sareeData = payload.data || payload.saree || payload;
+          setSaree(sareeData);
+          setImages(normalizeImages(sareeData.images));
+          setDeletedImages([]);
           setFormData({
-            designName: data.designName,
-            designNameTelugu: data.designNameTelugu,
-            description: data.description,
-            descriptionTelugu: data.descriptionTelugu,
-            material: data.material,
-            materialTelugu: data.materialTelugu,
-            pattern: data.pattern,
-            patternTelugu: data.patternTelugu,
-            color: data.color,
-            colorTelugu: data.colorTelugu,
-            retailPrice: data.retailPrice,
-            wholesalePrice: data.wholesalePrice,
-            stock: data.stock,
+            designName: sareeData.designName || '',
+            designNameTelugu: sareeData.designNameTelugu || '',
+            description: sareeData.description || '',
+            descriptionTelugu: sareeData.descriptionTelugu || '',
+            material: (sareeData.material || 'silk').toString().toLowerCase(),
+            materialTelugu: sareeData.materialTelugu || 'పట్టు',
+            pattern: (sareeData.pattern || 'plain').toString().toLowerCase(),
+            patternTelugu: sareeData.patternTelugu || 'సాధారణ',
+            color: sareeData.color || '',
+            colorTelugu: sareeData.colorTelugu || '',
+            retailPrice: sareeData.retailPrice ?? '',
+            wholesalePrice: sareeData.wholesalePrice ?? '',
+            stock: sareeData.stock ?? '',
           });
         }
       } catch (err) {
@@ -162,6 +172,7 @@ export default function EditSaree({ sareeId, onComplete }) {
 
   const removeExistingImage = (publicId) => {
     setImages(prev => prev.filter(img => img.public_id !== publicId));
+    setDeletedImages(prev => (prev.includes(publicId) ? prev : [...prev, publicId]));
   };
 
   const removeNewImage = (index) => {
@@ -177,19 +188,19 @@ export default function EditSaree({ sareeId, onComplete }) {
   };
 
   const handleMaterialChange = (e) => {
-    const material = materials.find(m => m.en === e.target.value);
+    const material = materials.find(m => m.value === e.target.value);
     setFormData(prev => ({
       ...prev,
-      material: material.en,
+      material: material.value,
       materialTelugu: material.te
     }));
   };
 
   const handlePatternChange = (e) => {
-    const pattern = patterns.find(p => p.en === e.target.value);
+    const pattern = patterns.find(p => p.value === e.target.value);
     setFormData(prev => ({
       ...prev,
-      pattern: pattern.en,
+      pattern: pattern.value,
       patternTelugu: pattern.te
     }));
   };
@@ -242,10 +253,9 @@ export default function EditSaree({ sareeId, onComplete }) {
       uploadFormData.append('wholesalePrice', String(wholesalePrice));
       uploadFormData.append('stock', String(stock));
 
-      // Existing images to keep
-      images.forEach(img => {
-        uploadFormData.append('existingImages', JSON.stringify(img));
-      });
+      if (deletedImages.length > 0) {
+        uploadFormData.append('deleteImages', JSON.stringify(deletedImages));
+      }
 
       // New images
       newImages.forEach(img => {
@@ -313,8 +323,8 @@ export default function EditSaree({ sareeId, onComplete }) {
       </button>
 
       <form onSubmit={handleSubmit} className="edit-saree-form">
-        {error && <div className="form-error">{error}</div>}
-        {success && <div className="form-success">{success}</div>}
+        {error && <div ref={alertRef} className="form-error form-notice">{error}</div>}
+        {success && <div className="form-success form-notice">{success}</div>}
 
         <div className="form-section">
           <h2>{isTelugu ? 'ప్రాథమిక వివరాలు' : 'Basic Details'}</h2>
@@ -370,7 +380,7 @@ export default function EditSaree({ sareeId, onComplete }) {
               <label>{isTelugu ? 'పదార్థం' : 'Material'}</label>
               <select value={formData.material} onChange={handleMaterialChange}>
                 {materials.map(m => (
-                  <option key={m.en} value={m.en}>{m.en}</option>
+                  <option key={m.value} value={m.value}>{m.en}</option>
                 ))}
               </select>
             </div>
@@ -378,7 +388,7 @@ export default function EditSaree({ sareeId, onComplete }) {
               <label>{isTelugu ? 'నమూనా' : 'Pattern'}</label>
               <select value={formData.pattern} onChange={handlePatternChange}>
                 {patterns.map(p => (
-                  <option key={p.en} value={p.en}>{p.en}</option>
+                  <option key={p.value} value={p.value}>{p.en}</option>
                 ))}
               </select>
             </div>
