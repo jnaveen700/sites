@@ -340,9 +340,60 @@ export const updateSaree = async (req, res) => {
   try {
     const { id } = req.params;
     const rawDeleteImages = req.body.deleteImages;
+    const rawExistingImages = req.body.existingImages;
     const rawRetailPrice = req.body.retailPrice;
     const rawWholesalePrice = req.body.wholesalePrice;
     const rawStock = req.body.stock;
+
+    const toArray = (value) => (Array.isArray(value) ? value : []);
+    const parseImageCollection = (value) => {
+      if (Array.isArray(value)) {
+        return value.filter(Boolean);
+      }
+
+      if (value === undefined || value === null || value === '') {
+        return [];
+      }
+
+      if (typeof value === 'string') {
+        const trimmed = value.trim();
+        if (!trimmed) {
+          return [];
+        }
+
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return parsed.filter(Boolean);
+          }
+          if (parsed && typeof parsed === 'object') {
+            return [parsed];
+          }
+        } catch {
+          return trimmed
+            .split(',')
+            .map((item) => item.trim())
+            .filter(Boolean);
+        }
+      }
+
+      if (typeof value === 'object') {
+        return [value];
+      }
+
+      return [];
+    };
+
+    const parseDeleteImages = (value) => parseImageCollection(value)
+      .map((entry) => {
+        if (typeof entry === 'string') {
+          return entry;
+        }
+
+        return entry?.public_id || entry?.publicId || entry?._id || '';
+      })
+      .filter(Boolean);
+
     const allowedFields = [
       'designName',
       'designNameTelugu',
@@ -378,18 +429,8 @@ export const updateSaree = async (req, res) => {
       updates.stock = rawStock;
     }
 
-    const deleteImages = Array.isArray(rawDeleteImages)
-      ? rawDeleteImages
-      : typeof rawDeleteImages === 'string' && rawDeleteImages.trim()
-        ? (() => {
-            try {
-              const parsed = JSON.parse(rawDeleteImages);
-              return Array.isArray(parsed) ? parsed : [];
-            } catch {
-              return rawDeleteImages.split(',').map((value) => value.trim()).filter(Boolean);
-            }
-          })()
-        : [];
+    const deleteImages = parseDeleteImages(rawDeleteImages);
+    const existingImages = parseImageCollection(rawExistingImages);
 
     const parsedRetailPrice = rawRetailPrice !== undefined
       ? Number(String(rawRetailPrice).trim())
@@ -412,6 +453,10 @@ export const updateSaree = async (req, res) => {
         message: 'Saree not found',
       });
     }
+
+      saree.images = Array.isArray(existingImages) && existingImages.length > 0
+        ? existingImages
+        : toArray(saree.images).filter(Boolean);
 
     const nextRetailPrice = parsedRetailPrice !== undefined ? parsedRetailPrice : saree.retailPrice;
     const nextWholesalePrice = parsedWholesalePrice !== undefined ? parsedWholesalePrice : saree.wholesalePrice;
@@ -442,7 +487,7 @@ export const updateSaree = async (req, res) => {
 
         try {
           await deleteImageFromCloudinary(publicId);
-          saree.images = saree.images.filter((img) => img.public_id !== publicId);
+          saree.images = toArray(saree.images).filter((img) => img.public_id !== publicId);
         } catch (deleteError) {
           console.error(`Error deleting image ${publicId}: ${deleteError.message}`);
         }
@@ -456,7 +501,7 @@ export const updateSaree = async (req, res) => {
         public_id: file.filename,
       }));
 
-      if (saree.images.length + newImages.length > 10) {
+      if (toArray(saree.images).length + newImages.length > 10) {
         for (const file of req.files) {
           await deleteImageFromCloudinary(file.filename);
         }
@@ -466,7 +511,7 @@ export const updateSaree = async (req, res) => {
         });
       }
 
-      saree.images.push(...newImages);
+      saree.images = [...toArray(saree.images), ...newImages];
     }
 
     // Update status based on stock if not explicitly set
@@ -552,8 +597,10 @@ export const deleteSaree = async (req, res) => {
     }
 
     // Delete all associated images from Cloudinary
-    if (saree.images && saree.images.length > 0) {
-      const deletePromises = saree.images.map((image) =>
+    const safeImages = Array.isArray(saree.images) ? saree.images : [];
+
+    if (safeImages.length > 0) {
+      const deletePromises = safeImages.map((image) =>
         deleteImageFromCloudinary(image.public_id).catch((err) => {
           console.error(`Failed to delete image ${image.public_id}: ${err.message}`);
         })

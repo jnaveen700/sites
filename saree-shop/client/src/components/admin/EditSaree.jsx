@@ -52,7 +52,13 @@ export default function EditSaree({ sareeId, onComplete }) {
     { value: 'woven', en: 'Woven', te: 'నేయబడిన' },
   ];
 
+  const safeArray = (value) => (Array.isArray(value) ? value : []);
+
   const toNumber = (value) => Number(String(value).trim());
+
+  const safeExistingImages = normalizeImages(safeArray(images));
+  const safeNewImages = safeArray(newImages);
+  const safeDeletedImages = safeArray(deletedImages);
 
   useEffect(() => {
     console.group('EditSaree Debug');
@@ -148,10 +154,10 @@ export default function EditSaree({ sareeId, onComplete }) {
 
   // Process files
   const handleFiles = (fileList) => {
-    const files = Array.from(fileList);
+    const files = Array.from(fileList || []);
     const validFiles = files.filter(file => file.type.startsWith('image/'));
 
-    if (validFiles.length + newImages.length + images.length > 5) {
+    if (validFiles.length + safeNewImages.length + safeExistingImages.length > 5) {
       setError(isTelugu ? 'గరిష్టంగా 5 చిత్రాలు' : 'Maximum 5 images');
       return;
     }
@@ -171,12 +177,15 @@ export default function EditSaree({ sareeId, onComplete }) {
   };
 
   const removeExistingImage = (publicId) => {
-    setImages(prev => prev.filter(img => img.public_id !== publicId));
-    setDeletedImages(prev => (prev.includes(publicId) ? prev : [...prev, publicId]));
+    setImages(prev => normalizeImages(prev).filter(img => img.public_id !== publicId));
+    setDeletedImages(prev => {
+      const safePrev = safeArray(prev);
+      return safePrev.includes(publicId) ? safePrev : [...safePrev, publicId];
+    });
   };
 
   const removeNewImage = (index) => {
-    setNewImages(prev => prev.filter((_, i) => i !== index));
+    setNewImages(prev => safeArray(prev).filter((_, i) => i !== index));
   };
 
   const handleInputChange = (e) => {
@@ -253,12 +262,12 @@ export default function EditSaree({ sareeId, onComplete }) {
       uploadFormData.append('wholesalePrice', String(wholesalePrice));
       uploadFormData.append('stock', String(stock));
 
-      if (deletedImages.length > 0) {
-        uploadFormData.append('deleteImages', JSON.stringify(deletedImages));
+      if (safeDeletedImages.length > 0) {
+        uploadFormData.append('deleteImages', JSON.stringify(safeDeletedImages));
       }
 
       // New images
-      newImages.forEach(img => {
+      safeNewImages.forEach(img => {
         uploadFormData.append('images', img.file);
       });
 
@@ -454,11 +463,11 @@ export default function EditSaree({ sareeId, onComplete }) {
           <h2>{isTelugu ? 'చిత్రాలు' : 'Images'}</h2>
 
           {/* Existing Images */}
-          {images.length > 0 && (
+          {safeExistingImages.length > 0 && (
             <div className="images-section">
               <h3>{isTelugu ? 'ప్రస్తుత చిత్రాలు' : 'Current Images'}</h3>
               <div className="image-previews">
-                {images.map((img, index) => (
+                {safeExistingImages.map((img, index) => (
                   <div key={img?.public_id || img?._id || getImageUrl(img) || index} className="image-preview-item">
                     <img src={getImageUrl(img)} alt="Current" />
                     <button
@@ -499,11 +508,11 @@ export default function EditSaree({ sareeId, onComplete }) {
           </div>
 
           {/* New Image Previews */}
-          {newImages.length > 0 && (
+          {safeNewImages.length > 0 && (
             <div className="images-section">
               <h3>{isTelugu ? 'కొత్త చిత్రాలు' : 'New Images'}</h3>
               <div className="image-previews">
-                {newImages.map((img, idx) => (
+                {safeNewImages.map((img, idx) => (
                   <div key={idx} className="image-preview-item">
                     <img src={img.preview} alt="New" />
                     <button
@@ -520,7 +529,7 @@ export default function EditSaree({ sareeId, onComplete }) {
           )}
 
           <div className="image-count">
-            {images.length + newImages.length}/5 {isTelugu ? 'చిత్రాలు' : 'images'}
+            {safeExistingImages.length + safeNewImages.length}/5 {isTelugu ? 'చిత్రాలు' : 'images'}
           </div>
         </div>
 
