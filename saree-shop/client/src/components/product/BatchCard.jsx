@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
-import { getImageUrl } from '../../utils/image';
+import { getImageUrl, normalizeImages, renderTextValue } from '../../utils/imageHelpers';
 import '../../styles/BatchCard.css';
 
 export default function BatchCard({ batch, onViewDetails }) {
@@ -14,7 +15,17 @@ export default function BatchCard({ batch, onViewDetails }) {
   };
 
   const isNewDrop_ = isNewDrop();
-  const imageCount = batch.images ? batch.images.length : 0;
+  const images = normalizeImages(batch?.images);
+  const imageCount = images.length;
+
+  useEffect(() => {
+    console.groupCollapsed('BatchCard Debug');
+    console.log('Batch:', batch);
+    console.log('Images:', batch?.images);
+    console.log('Normalized images:', images);
+    console.log('First image:', images[0]);
+    console.groupEnd();
+  }, [batch, images]);
 
   return (
     <div className="batch-card" onClick={onViewDetails}>
@@ -34,8 +45,8 @@ export default function BatchCard({ batch, onViewDetails }) {
 
         {/* Main Image */}
         <div className="card-image">
-          {batch.images && batch.images.length > 0 ? (
-            <img src={getImageUrl(batch.images[0])} alt={batch.title || 'Batch'} />
+          {images.length > 0 ? (
+            <img src={getImageUrl(images[0])} alt={renderTextValue(batch.title, 'Batch')} />
           ) : (
             <div className="no-image-placeholder">📸</div>
           )}
@@ -54,7 +65,7 @@ export default function BatchCard({ batch, onViewDetails }) {
         {/* Title */}
         {batch.title && (
           <h3 className="card-title">
-            {batch.title}
+            {renderTextValue(batch.title)}
           </h3>
         )}
 
@@ -62,7 +73,7 @@ export default function BatchCard({ batch, onViewDetails }) {
         {batch.category && (
           <div className="card-tags">
             <span className="tag">
-              {batch.category}
+              {renderTextValue(batch.category)}
             </span>
           </div>
         )}
@@ -70,14 +81,14 @@ export default function BatchCard({ batch, onViewDetails }) {
         {/* Description */}
         {batch.description && (
           <p className="card-description">
-            {batch.description}
+            {renderTextValue(batch.description)}
           </p>
         )}
 
         {/* Pricing */}
         <div className="card-pricing">
           <div className="price-main">
-            <span className="price-amount">₹{batch.price.toLocaleString()}</span>
+            <span className="price-amount">₹{renderTextValue(batch.price, 0).toLocaleString()}</span>
             <span className="price-type">
               {isTelugu ? 'ధర' : 'Price'}
             </span>

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
-import { getImageUrl } from '../../utils/image';
+import { getImageUrl, normalizeImages, renderTextValue } from '../../utils/imageHelpers';
 import '../../styles/SareeCard.css';
 
 export default function SareeCard({
@@ -12,6 +12,16 @@ export default function SareeCard({
   const { t, isTelugu } = useLanguage();
   const [isAdding, setIsAdding] = useState(false);
   const [addedMessage, setAddedMessage] = useState('');
+  const images = normalizeImages(saree?.images);
+
+  useEffect(() => {
+    console.groupCollapsed('SareeCard Debug');
+    console.log('Saree:', saree);
+    console.log('Images:', saree?.images);
+    console.log('Normalized images:', images);
+    console.log('First image:', images[0]);
+    console.groupEnd();
+  }, [saree, images]);
 
   // Check if this is a new saree (within 7 days)
   const isNewDrop = () => {
@@ -98,10 +108,10 @@ export default function SareeCard({
 
         {/* Main Image */}
         <div className="card-image">
-          {saree.images && saree.images.length > 0 ? (
+          {images.length > 0 ? (
             <img
-              src={getImageUrl(saree.images?.[0])}
-              alt={saree.designName}
+              src={getImageUrl(images[0])}
+              alt={renderTextValue(saree.designName, 'Saree image')}
             />
           ) : (
             <div className="no-image-placeholder">📷</div>
@@ -137,23 +147,23 @@ export default function SareeCard({
       <div className="card-content">
         {/* Title */}
         <h3 className="card-title">
-          {isTelugu ? saree.designNameTelugu : saree.designName}
+          {isTelugu ? renderTextValue(saree.designNameTelugu, renderTextValue(saree.designName, 'Saree')) : renderTextValue(saree.designName, 'Saree')}
         </h3>
 
         {/* Tags */}
         <div className="card-tags">
           <span className="tag">
-            {isTelugu ? saree.materialTelugu : saree.material}
+            {isTelugu ? renderTextValue(saree.materialTelugu, renderTextValue(saree.material)) : renderTextValue(saree.material)}
           </span>
           <span className="tag">
-            {isTelugu ? saree.patternTelugu : saree.pattern}
+            {isTelugu ? renderTextValue(saree.patternTelugu, renderTextValue(saree.pattern)) : renderTextValue(saree.pattern)}
           </span>
         </div>
 
         {/* Pricing */}
         <div className="card-pricing">
           <div className="price-main">
-            <span className="price-amount">₹{price.toLocaleString()}</span>
+            <span className="price-amount">₹{renderTextValue(price, 0).toLocaleString()}</span>
             <span className="price-type">
               {customerType === 'wholesale'
                 ? isTelugu ? 'బందీ' : 'Wholesale'
@@ -164,7 +174,7 @@ export default function SareeCard({
           {/* Original price if discount exists */}
           {discount > 0 && (
             <span className="price-original">
-              ₹{saree.retailPrice.toLocaleString()}
+              ₹{renderTextValue(saree.retailPrice, 0).toLocaleString()}
             </span>
           )}
         </div>
@@ -176,7 +186,7 @@ export default function SareeCard({
               {isTelugu ? 'రంగు' : 'Color'}:
             </span>
             <span className="color-name">
-              {isTelugu ? saree.colorTelugu : saree.color}
+              {isTelugu ? renderTextValue(saree.colorTelugu, renderTextValue(saree.color)) : renderTextValue(saree.color)}
             </span>
           </div>
         )}

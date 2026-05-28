@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useCart } from '../context/CartContext';
+import { renderTextValue } from '../utils/imageHelpers';
 import '../styles/Checkout.css';
 
 export default function Checkout() {
@@ -119,7 +120,7 @@ export default function Checkout() {
 
                   <div className="item-details">
                     <p className="item-name">
-                      {item.name}
+                      {renderTextValue(item.name, 'Item')}
                     </p>
 
                     <p className="item-price">

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
 import { clearAuthSession, getAuthHeaders } from '../../utils/auth';
-import { getImageUrl } from '../../utils/image';
+import { getImageUrl } from '../../utils/imageHelpers';
 import '../../styles/EditSaree.css';
 
 export default function EditSaree({ sareeId, onComplete }) {
@@ -51,6 +51,14 @@ export default function EditSaree({ sareeId, onComplete }) {
   ];
 
   const toNumber = (value) => Number(String(value).trim());
+
+  useEffect(() => {
+    console.group('EditSaree Debug');
+    console.log('Saree:', saree);
+    console.log('Existing images:', images);
+    console.log('New images:', newImages);
+    console.groupEnd();
+  }, [saree, images, newImages]);
 
   // Fetch saree data
   useEffect(() => {

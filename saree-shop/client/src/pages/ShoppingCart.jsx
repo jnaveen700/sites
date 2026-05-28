@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { API_BASE_URL } from '../config/api';
 import { useCart } from '../context/CartContext';
-import { getImageUrl } from '../utils/image';
+import { getImageUrl, renderTextValue } from '../utils/imageHelpers';
 import '../styles/ShoppingCart.css';
 
 export default function ShoppingCart() {
@@ -44,6 +44,13 @@ export default function ShoppingCart() {
       setLoading(false);
     }
   }, [cart, isTelugu]);
+
+  useEffect(() => {
+    console.group('Cart Debug');
+    console.log('Cart:', cart);
+    console.log('Sarees map keys:', Object.keys(sarees || {}));
+    console.groupEnd();
+  }, [cart, sarees]);
 
   const gstAmount = cartTotal * gstRate;
   const finalTotal = cartTotal + gstAmount;
@@ -122,19 +129,19 @@ export default function ShoppingCart() {
                     <div className="item-product">
                       <div className="product-image">
                         {saree.images && saree.images[0] && (
-                        <img
-                          src={getImageUrl(saree.images?.[0])}
-                          alt={saree.designName}
-                        />
-                      )}
+                          <img
+                            src={getImageUrl(saree.images?.[0])}
+                            alt={renderTextValue(saree.designName, 'Saree image')}
+                          />
+                        )}
                       </div>
                       <div className="product-info">
-                        <h3>{saree.designName}</h3>
+                        <h3>{renderTextValue(saree.designName, 'Saree')}</h3>
                         {saree.designNameTelugu && (
-                          <p className="product-name-te">{saree.designNameTelugu}</p>
+                          <p className="product-name-te">{renderTextValue(saree.designNameTelugu)}</p>
                         )}
                         <p className="product-meta">
-                          {saree.material} • {saree.pattern}
+                          {renderTextValue(saree.material)} • {renderTextValue(saree.pattern)}
                         </p>
                         <p className="customer-type">
                           {cartItem.customerType === 'wholesale'

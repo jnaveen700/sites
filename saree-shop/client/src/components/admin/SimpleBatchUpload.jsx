@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
 import { API_BASE_URL } from '../../config/api';
@@ -29,6 +29,13 @@ export default function SimpleBatchUpload({ onBatchCreated }) {
     { value: 'Budget', en: 'Budget', te: 'బడ్జెట్' },
     { value: 'Other', en: 'Other', te: 'ఇతరం' },
   ];
+
+  useEffect(() => {
+    console.group('SimpleBatchUpload Debug');
+    console.log('Form data:', formData);
+    console.log('Images:', images);
+    console.groupEnd();
+  }, [formData, images]);
 
   // Handle drag events
   const handleDrag = (e) => {

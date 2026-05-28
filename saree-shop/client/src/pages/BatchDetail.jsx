@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useCart } from '../context/CartContext';
 import { API_BASE_URL } from '../config/api';
-import { getImageUrl } from '../utils/image';
+import { getImageUrl, normalizeImages, renderTextValue } from '../utils/imageHelpers';
 import '../styles/SareeDetail.css';
 
 export default function BatchDetail() {
@@ -39,6 +39,20 @@ export default function BatchDetail() {
 
     fetchBatchDetail();
   }, [id, isTelugu]);
+
+  useEffect(() => {
+    console.group('Batch Debug');
+    console.log('Batch:', batch);
+    console.log('Images:', batch?.images);
+    console.log('Selected image index:', selectedImageIndex);
+    console.log('Selected image:', batch?.images?.[selectedImageIndex]);
+    console.log('Mapped image items:', normalizeImages(batch?.images).map((img, index) => ({
+      index,
+      value: img,
+      url: getImageUrl(img),
+    })));
+    console.groupEnd();
+  }, [batch, selectedImageIndex]);
 
   const handleAddToCart = () => {
     if (batch) {
@@ -80,7 +94,7 @@ export default function BatchDetail() {
     );
   }
 
-  const images = Array.isArray(batch.images) ? batch.images : [];
+  const images = normalizeImages(batch?.images);
   const currentImage = getImageUrl(images[selectedImageIndex]);
 
   return (
@@ -89,7 +103,7 @@ export default function BatchDetail() {
         <div className="detail-image-section">
           <div className="main-image">
             {currentImage !== '/placeholder.jpg' ? (
-              <img src={currentImage} alt={batch.title} />
+              <img src={currentImage} alt={renderTextValue(batch.title, 'Batch detail image')} />
             ) : (
               <div className="image-placeholder">📷</div>
             )}
@@ -112,30 +126,45 @@ export default function BatchDetail() {
               ))}
             </div>
           )}
+
+          {import.meta.env.DEV && (
+            <section className="debug-panel" style={{ marginTop: '1rem', padding: '1rem', border: '1px dashed #c98', borderRadius: '12px', background: '#fffaf5' }}>
+              <h3 style={{ marginTop: 0 }}>Debug Snapshot</h3>
+              <pre style={{ whiteSpace: 'pre-wrap', margin: 0, fontSize: '12px', lineHeight: 1.5 }}>
+                {JSON.stringify({
+                  batch,
+                  images,
+                  selectedImageIndex,
+                  selectedImage: images[selectedImageIndex],
+                  currentImage,
+                }, null, 2)}
+              </pre>
+            </section>
+          )}
         </div>
 
         <div className="detail-info-section">
-          <h1>{batch.title || batch.name}</h1>
+          <h1>{renderTextValue(batch.title || batch.name, 'Batch Detail')}</h1>
 
           <div className="detail-category">
-            <span className="category-badge">{batch.category || 'Batch'}</span>
+            <span className="category-badge">{renderTextValue(batch.category, 'Batch')}</span>
           </div>
 
           {batch.description && (
             <div className="detail-description">
               <h3>{isTelugu ? 'వివరణ' : 'Description'}</h3>
-              <p>{batch.description}</p>
+              <p>{renderTextValue(batch.description)}</p>
             </div>
           )}
 
           <div className="detail-pricing">
             <div className="price-display">
               <span className="label">{isTelugu ? 'ధర' : 'Price'}</span>
-              <span className="price">₹{batch.price || 0}</span>
+              <span className="price">₹{renderTextValue(batch.price, 0)}</span>
             </div>
             {batch.minOrder && (
               <p className="min-order">
-                {isTelugu ? 'కనీస ఆర్డర్' : 'Min. Order'}: {batch.minOrder}
+                {isTelugu ? 'కనీస ఆర్డర్' : 'Min. Order'}: {renderTextValue(batch.minOrder, 0)}
               </p>
             )}
           </div>
@@ -175,6 +204,7 @@ export default function BatchDetail() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { API_BASE_URL } from '../config/api';
-import { getImageUrl } from '../utils/image';
+import { getImageUrl, normalizeImages, renderTextValue } from '../utils/imageHelpers';
 import '../styles/SareeDetail.css';
 
 export default function SareeDetail() {
@@ -43,6 +43,20 @@ export default function SareeDetail() {
     fetchSareeDetail();
   }, [id, isTelugu]);
 
+  useEffect(() => {
+    console.group('Saree Debug');
+    console.log('Saree:', saree);
+    console.log('Images:', saree?.images);
+    console.log('Selected image index:', selectedImageIndex);
+    console.log('Selected image:', saree?.images?.[selectedImageIndex]);
+    console.log('Mapped image items:', normalizeImages(saree?.images).map((img, index) => ({
+      index,
+      value: img,
+      url: getImageUrl(img),
+    })));
+    console.groupEnd();
+  }, [saree, selectedImageIndex]);
+
   const handleAddToCart = () => {
     // TODO: Implement cart functionality with CartContext
     setAddedToCart(true);
@@ -59,7 +73,7 @@ export default function SareeDetail() {
   const discount = saree ? Math.round(((otherPrice - currentPrice) / otherPrice) * 100) : 0;
   const isNewDrop = saree && new Date() - new Date(saree.createdAt) < 7 * 24 * 60 * 60 * 1000;
   const stockStatus = saree?.stock > 15 ? 'in-stock' : saree?.stock > 0 ? 'limited' : 'out-of-stock';
-  const images = Array.isArray(saree?.images) ? saree.images : [];
+  const images = normalizeImages(saree?.images);
 
   if (loading) {
     return (
@@ -93,7 +107,7 @@ export default function SareeDetail() {
           {isTelugu ? 'కేటలాగ్' : 'Catalog'}
         </button>
         <span>/</span>
-        <span className="breadcrumb-current">{saree.designName}</span>
+        <span className="breadcrumb-current">{renderTextValue(saree.designName, 'Saree Detail')}</span>
       </div>
 
       {/* MAIN CONTENT */}
@@ -106,7 +120,7 @@ export default function SareeDetail() {
             
             <img
               src={getImageUrl(images[selectedImageIndex])}
-              alt={saree.designName}
+              alt={renderTextValue(saree.designName, 'Saree detail image')}
             />
             {/* STOCK STATUS OVERLAY */}
             <div className={`stock-status ${stockStatus}`}>
@@ -127,11 +141,26 @@ export default function SareeDetail() {
                 >
                   <img
                     src={getImageUrl(img)}
-                    alt={`${saree.designName} ${index + 1}`}
+                    alt={`${renderTextValue(saree.designName, 'Saree')} ${index + 1}`}
                   />
                 </button>
               ))}
             </div>
+          )}
+
+          {import.meta.env.DEV && (
+            <section className="debug-panel" style={{ marginTop: '1rem', padding: '1rem', border: '1px dashed #c98', borderRadius: '12px', background: '#fffaf5' }}>
+              <h3 style={{ marginTop: 0 }}>Debug Snapshot</h3>
+              <pre style={{ whiteSpace: 'pre-wrap', margin: 0, fontSize: '12px', lineHeight: 1.5 }}>
+                {JSON.stringify({
+                  saree,
+                  images,
+                  selectedImageIndex,
+                  selectedImage: images[selectedImageIndex],
+                  currentImage: getImageUrl(images[selectedImageIndex]),
+                }, null, 2)}
+              </pre>
+            </section>
           )}
 
         </section>
@@ -140,9 +169,9 @@ export default function SareeDetail() {
         <section className="details-section">
           {/* TITLE & RATING */}
           <div className="product-header">
-            <h1 className="product-title">{saree.designName}</h1>
+            <h1 className="product-title">{renderTextValue(saree.designName, 'Saree Detail')}</h1>
             {saree.designNameTelugu && (
-              <p className="product-title-te">{saree.designNameTelugu}</p>
+              <p className="product-title-te">{renderTextValue(saree.designNameTelugu)}</p>
             )}
             <div className="rating">
               <span className="stars">⭐⭐⭐⭐⭐</span>
@@ -155,9 +184,9 @@ export default function SareeDetail() {
             <div className="price-box">
               <h3>{isTelugu ? 'ధర' : 'Price'}</h3>
               <div className="prices">
-                <span className="current-price">₹{currentPrice}</span>
+                <span className="current-price">₹{renderTextValue(currentPrice, 0)}</span>
                 {discount > 0 && (
-                  <span className="original-price">₹{otherPrice}</span>
+                  <span className="original-price">₹{renderTextValue(otherPrice, 0)}</span>
                 )}
               </div>
               <p className="price-note">
@@ -171,10 +200,10 @@ export default function SareeDetail() {
             <div className="stock-box">
               <h3>{isTelugu ? 'స్టాక్ స్థితి' : 'Availability'}</h3>
               <p className={`stock-info ${stockStatus}`}>
-                {stockStatus === 'in-stock' && isTelugu && `${saree.stock} సరీలు స్టాక్‌లో`}
-                {stockStatus === 'in-stock' && !isTelugu && `${saree.stock} units in stock`}
-                {stockStatus === 'limited' && isTelugu && `కేవలం ${saree.stock} సరీలు మిగిలి ఉన్నాయి`}
-                {stockStatus === 'limited' && !isTelugu && `Only ${saree.stock} left`}
+                {stockStatus === 'in-stock' && isTelugu && `${renderTextValue(saree.stock, 0)} సరీలు స్టాక్‌లో`}
+                {stockStatus === 'in-stock' && !isTelugu && `${renderTextValue(saree.stock, 0)} units in stock`}
+                {stockStatus === 'limited' && isTelugu && `కేవలం ${renderTextValue(saree.stock, 0)} సరీలు మిగిలి ఉన్నాయి`}
+                {stockStatus === 'limited' && !isTelugu && `Only ${renderTextValue(saree.stock, 0)} left`}
                 {stockStatus === 'out-of-stock' && (isTelugu ? 'స్టాక్ నుండి' : 'Out of Stock')}
               </p>
             </div>
@@ -186,32 +215,32 @@ export default function SareeDetail() {
             
             <div className="attribute">
               <span className="attr-label">{isTelugu ? 'పదార్థం' : 'Material'}:</span>
-              <span className="attr-value">{saree.material}</span>
+              <span className="attr-value">{renderTextValue(saree.material)}</span>
               {saree.materialTelugu && (
-                <span className="attr-value-te">({saree.materialTelugu})</span>
+                <span className="attr-value-te">({renderTextValue(saree.materialTelugu)})</span>
               )}
             </div>
 
             <div className="attribute">
               <span className="attr-label">{isTelugu ? 'నమూనా' : 'Pattern'}:</span>
-              <span className="attr-value">{saree.pattern}</span>
+              <span className="attr-value">{renderTextValue(saree.pattern)}</span>
               {saree.patternTelugu && (
-                <span className="attr-value-te">({saree.patternTelugu})</span>
+                <span className="attr-value-te">({renderTextValue(saree.patternTelugu)})</span>
               )}
             </div>
 
             <div className="attribute">
               <span className="attr-label">{isTelugu ? 'రంగు' : 'Color'}:</span>
-              <span className="attr-value">{saree.color}</span>
+              <span className="attr-value">{renderTextValue(saree.color)}</span>
               {saree.colorTelugu && (
-                <span className="attr-value-te">({saree.colorTelugu})</span>
+                <span className="attr-value-te">({renderTextValue(saree.colorTelugu)})</span>
               )}
             </div>
 
             {saree.season && (
               <div className="attribute">
                 <span className="attr-label">{isTelugu ? 'సీజన్' : 'Season'}:</span>
-                <span className="attr-value">{saree.season}</span>
+                <span className="attr-value">{renderTextValue(saree.season)}</span>
               </div>
             )}
           </div>
@@ -220,9 +249,9 @@ export default function SareeDetail() {
           {saree.description && (
             <div className="description-section">
               <h3>{isTelugu ? 'వివరణ' : 'Description'}</h3>
-              <p>{saree.description}</p>
+              <p>{renderTextValue(saree.description)}</p>
               {saree.descriptionTelugu && (
-                <p className="description-te">{saree.descriptionTelugu}</p>
+                <p className="description-te">{renderTextValue(saree.descriptionTelugu)}</p>
               )}
             </div>
           )}
@@ -290,6 +319,7 @@ export default function SareeDetail() {
           {isTelugu ? '← వెనుకకు వెళ్లండి' : '← Go Back'}
         </button>
       </div>
+
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { API_BASE_URL } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
 import { clearAuthSession, getAuthHeaders } from '../../utils/auth';
 import '../../styles/AddSaree.css';
@@ -47,6 +47,13 @@ export default function AddSaree({ onAdded }) {
   ];
 
   const toNumber = (value) => Number(String(value).trim());
+
+  useEffect(() => {
+    console.group('AddSaree Debug');
+    console.log('Form data:', formData);
+    console.log('Images:', images);
+    console.groupEnd();
+  }, [formData, images]);
 
   // Handle drag
   const handleDrag = (e) => {

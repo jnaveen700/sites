@@ -17,6 +17,7 @@ import Contact from './pages/Contact';
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
 import ProtectedAdminRoute from './components/common/ProtectedAdminRoute';
+import RouteErrorBoundary from './components/common/RouteErrorBoundary';
 
 // Layout wrapper that includes Navigation for all pages except LanguageSelection
 function MainLayout({ children }) {
@@ -68,7 +69,14 @@ function App() {
               path="/saree/:id"
               element={
                 <MainLayout>
-                  <SareeDetail />
+                  <RouteErrorBoundary fallback={
+                    <div style={{ padding: '2rem' }}>
+                      <h2>Saree detail could not be rendered</h2>
+                      <p>Please reload the page or open a different collection.</p>
+                    </div>
+                  }>
+                    <SareeDetail />
+                  </RouteErrorBoundary>
                 </MainLayout>
               }
             />
@@ -76,7 +84,14 @@ function App() {
               path="/batch/:id"
               element={
                 <MainLayout>
-                  <BatchDetail />
+                  <RouteErrorBoundary fallback={
+                    <div style={{ padding: '2rem' }}>
+                      <h2>Collection detail could not be rendered</h2>
+                      <p>Please reload the page or open a different collection.</p>
+                    </div>
+                  }>
+                    <BatchDetail />
+                  </RouteErrorBoundary>
                 </MainLayout>
               }
             />
