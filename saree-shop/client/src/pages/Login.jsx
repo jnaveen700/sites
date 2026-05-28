@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config/api';
 import { useLanguage } from '../hooks/useLanguage';
-import { clearAuthSession, getAuthSession, validateAuthSession } from '../utils/auth';
+import { clearAuthSession, getAuthSession, isAdminUser, resolveAuthSession } from '../utils/auth';
 import '../styles/Login.css';
 
 export default function Login() {
@@ -19,18 +19,14 @@ export default function Login() {
     let mounted = true;
 
     const syncExistingSession = async () => {
-      const session = getAuthSession();
+      const session = await resolveAuthSession();
 
       if (!session?.token) {
         clearAuthSession();
         return;
       }
 
-      const user = session.user?.role === 'admin'
-        ? session.user
-        : await validateAuthSession();
-
-      if (mounted && user?.role === 'admin') {
+      if (mounted && isAdminUser(session.user)) {
         navigate('/admin/dashboard', { replace: true });
       }
     };

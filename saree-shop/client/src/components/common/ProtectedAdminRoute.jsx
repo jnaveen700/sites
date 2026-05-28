@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { clearAuthSession, getAuthSession, validateAuthSession } from '../../utils/auth';
+import { clearAuthSession, getAuthSession, isAdminUser, resolveAuthSession } from '../../utils/auth';
 
 export default function ProtectedAdminRoute({ children }) {
   const location = useLocation();
@@ -11,7 +11,7 @@ export default function ProtectedAdminRoute({ children }) {
     let isActive = true;
 
     const verifySession = async () => {
-      const session = getAuthSession();
+      const session = await resolveAuthSession();
 
       if (!session?.token) {
         clearAuthSession();
@@ -22,11 +22,9 @@ export default function ProtectedAdminRoute({ children }) {
         return;
       }
 
-      const user = session.user?.role === 'admin'
-        ? session.user
-        : await validateAuthSession();
+      const user = session.user;
 
-      if (!user || user.role !== 'admin') {
+      if (!isAdminUser(user)) {
         clearAuthSession();
         if (isActive) {
           setRedirectTo('/login');

@@ -53,6 +53,7 @@ router.put(
   '/:id',
   authMiddleware,
   authorizeRoles('admin'),
+  uploadMiddleware.array('images', 50),
   updateBatch
 );
 

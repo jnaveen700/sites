@@ -81,7 +81,7 @@
 .form-input:focus {
   outline: none;
   border-color: #d4a574;
-  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.1);
+  box-shadow: 0 0 0 3px rgba(212, 165, 116, 0.14);
   background: #fffaf5;
 }
 
@@ -120,7 +120,7 @@
 
 .upload-zone:hover {
   border-color: #8b5a2b;
-  background: #fdf7f1;
+  background: #fff7ef;
 }
 
 .upload-zone.active {

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import '../styles/AdminDashboard.css';
 import SimpleBatchUpload from '../components/admin/SimpleBatchUpload';
@@ -8,8 +9,14 @@ import EditSaree from '../components/admin/EditSaree';
 
 export default function AdminDashboard() {
   const { t, language, switchLanguage, isTelugu } = useLanguage();
-  const [activeTab, setActiveTab] = useState('batch'); // 'batch', 'manage', or 'add'
-  const [editingId, setEditingId] = useState(null);
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'batch'); // 'batch', 'manage', or 'add'
+  const [editingId, setEditingId] = useState(location.state?.editingId || null);
+
+  useEffect(() => {
+    setActiveTab(location.state?.activeTab || 'batch');
+    setEditingId(location.state?.editingId || null);
+  }, [location.state]);
 
   const handleLanguageSwitch = (lang) => {
     switchLanguage(lang);

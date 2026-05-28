@@ -68,6 +68,29 @@ export const getAuthSession = () => {
   return { token, user };
 };
 
+export const isAdminUser = (user) => {
+  return user?.role === 'admin';
+};
+
+export const resolveAuthSession = async () => {
+  const session = getAuthSession();
+
+  if (!session?.token) {
+    return null;
+  }
+
+  if (isAdminUser(session.user)) {
+    return session;
+  }
+
+  const user = await validateAuthSession();
+  if (!user) {
+    return null;
+  }
+
+  return { token: session.token, user };
+};
+
 export const getAuthHeaders = () => {
   const session = getAuthSession();
 
@@ -87,21 +110,26 @@ export const validateAuthSession = async () => {
     return null;
   }
 
-  const response = await fetch(`${API_BASE_URL}/auth/me`, {
-    headers: {
-      Authorization: `Bearer ${session.token}`,
-    },
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: {
+        Authorization: `Bearer ${session.token}`,
+      },
+    });
 
-  if (!response.ok) {
+    if (!response.ok) {
+      clearAuthSession();
+      return null;
+    }
+
+    const data = await response.json();
+    if (data?.user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    }
+
+    return data?.user || null;
+  } catch {
     clearAuthSession();
     return null;
   }
-
-  const data = await response.json();
-  if (data?.user) {
-    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
-  }
-
-  return data?.user || null;
 };

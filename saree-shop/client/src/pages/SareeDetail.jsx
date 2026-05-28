@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { API_BASE_URL } from '../config/api';
 import { getImageUrl, normalizeImages, renderTextValue } from '../utils/imageHelpers';
+import { getAuthHeaders, isAdminUser, resolveAuthSession } from '../utils/auth';
 import '../styles/SareeDetail.css';
 
 export default function SareeDetail() {
@@ -20,6 +21,9 @@ export default function SareeDetail() {
     location.state?.customerType || localStorage.getItem('customerType') || 'retail'
   );
   const [addedToCart, setAddedToCart] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminMessage, setAdminMessage] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   // Fetch saree details
   useEffect(() => {
@@ -57,6 +61,23 @@ export default function SareeDetail() {
     console.groupEnd();
   }, [saree, selectedImageIndex]);
 
+  useEffect(() => {
+    let active = true;
+
+    const resolveAdmin = async () => {
+      const session = await resolveAuthSession();
+      if (active) {
+        setIsAdmin(isAdminUser(session?.user));
+      }
+    };
+
+    void resolveAdmin();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleAddToCart = () => {
     // TODO: Implement cart functionality with CartContext
     setAddedToCart(true);
@@ -66,6 +87,42 @@ export default function SareeDetail() {
   const handleBuyNow = () => {
     // TODO: Redirect to checkout after implementing cart
     navigate('/checkout', { state: { sareeId: id, quantity, customerType } });
+  };
+
+  const handleEditSaree = () => {
+    navigate('/admin/dashboard', { state: { activeTab: 'manage', editingId: id } });
+  };
+
+  const handleDeleteSaree = async () => {
+    if (!window.confirm(isTelugu ? 'ఈ సరీని తొలగించాలా?' : 'Delete this saree?')) {
+      return;
+    }
+
+    const headers = getAuthHeaders();
+    if (!headers) {
+      setAdminMessage(isTelugu ? 'దయచేసి మళ్లీ లాగిన్ చేయండి' : 'Please log in again');
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      const response = await fetch(`${API_BASE_URL}/sarees/${id}`, {
+        method: 'DELETE',
+        headers,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete saree');
+      }
+
+      setAdminMessage(isTelugu ? 'సరీ తొలగించబడింది' : 'Saree deleted successfully');
+      navigate('/admin/dashboard', { state: { activeTab: 'manage' }, replace: true });
+    } catch (err) {
+      console.error('Error deleting saree:', err);
+      setAdminMessage(isTelugu ? 'తొలగింపు విఫలమైంది' : 'Failed to delete saree');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const currentPrice = customerType === 'wholesale' ? saree?.wholesalePrice : saree?.retailPrice;
@@ -167,6 +224,27 @@ export default function SareeDetail() {
 
         {/* DETAILS SECTION */}
         <section className="details-section">
+          {isAdmin && (
+            <div className="detail-admin-actions">
+              <div>
+                <span className="detail-admin-label">{isTelugu ? 'ఆడ్మిన్ నియంత్రణలు' : 'Admin controls'}</span>
+                <p>{isTelugu ? 'ఈ సరీని ఎడిట్ చేయండి, తొలగించండి, లేదా కొత్త ఎంట్రీ జోడించండి.' : 'Edit, delete, or jump back to the admin editor.'}</p>
+              </div>
+              <div className="detail-admin-buttons">
+                <button className="admin-action-btn admin-action-primary" onClick={handleEditSaree}>
+                  {isTelugu ? 'సరీని ఎడిట్ చేయండి' : 'Edit Saree'}
+                </button>
+                <button className="admin-action-btn admin-action-secondary" onClick={() => navigate('/admin/dashboard', { state: { activeTab: 'add' } })}>
+                  {isTelugu ? 'కొత్త సరీ జోడించండి' : 'Add Saree'}
+                </button>
+                <button className="admin-action-btn admin-action-danger" onClick={handleDeleteSaree} disabled={deleting}>
+                  {deleting ? (isTelugu ? 'తొలగిస్తోంది...' : 'Deleting...') : (isTelugu ? 'తొలగించండి' : 'Delete Saree')}
+                </button>
+              </div>
+              {adminMessage && <p className="detail-admin-message">{adminMessage}</p>}
+            </div>
+          )}
+
           {/* TITLE & RATING */}
           <div className="product-header">
             <h1 className="product-title">{renderTextValue(saree.designName, 'Saree Detail')}</h1>

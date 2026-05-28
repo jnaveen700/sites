@@ -203,8 +203,32 @@ export const updateBatch = async (req, res) => {
     }
     if (status !== undefined) batch.status = status;
 
+    const hasReplacementImages = Array.isArray(req.files) && req.files.length > 0;
+    const previousImages = hasReplacementImages ? [...(batch.images || [])] : [];
+
+    if (hasReplacementImages) {
+      batch.images = req.files.map((file) => ({
+        url: file.path,
+        public_id: file.filename,
+      }));
+    }
+
     // Save
     await batch.save();
+
+    if (hasReplacementImages) {
+      for (const image of previousImages) {
+        if (!image?.public_id) {
+          continue;
+        }
+
+        try {
+          await deleteImageFromCloudinary(image.public_id);
+        } catch (cleanupErr) {
+          console.error('Failed to cleanup replaced image:', image.public_id, cleanupErr);
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,

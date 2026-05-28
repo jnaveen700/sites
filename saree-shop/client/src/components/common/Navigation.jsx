@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../../hooks/useLanguage';
 import { useCart } from '../../context/CartContext';
-import { clearAuthSession, getAuthSession } from '../../utils/auth';
+import { clearAuthSession, getAuthSession, isAdminUser, resolveAuthSession } from '../../utils/auth';
 import '../../styles/Navigation.css';
 
 export default function Navigation() {
@@ -14,11 +14,23 @@ export default function Navigation() {
   const [session, setSession] = useState(() => getAuthSession());
 
   useEffect(() => {
-    const syncSession = () => setSession(getAuthSession());
-    syncSession();
+    let mounted = true;
 
-    window.addEventListener('storage', syncSession);
-    return () => window.removeEventListener('storage', syncSession);
+    const syncSession = async () => {
+      const resolved = await resolveAuthSession();
+      if (mounted) {
+        setSession(resolved || getAuthSession());
+      }
+    };
+
+    void syncSession();
+
+    const handleStorage = () => void syncSession();
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      mounted = false;
+      window.removeEventListener('storage', handleStorage);
+    };
   }, [location.pathname]);
 
   const isActive = (path) => location.pathname === path;
@@ -151,7 +163,7 @@ export default function Navigation() {
           )}
 
           {/* Admin Link */}
-          {session?.user?.role === 'admin' && (
+          {isAdminUser(session?.user) && (
             <Link to="/admin/dashboard" className="nav-link admin-link" title={isTelugu ? 'ఆడ్మిన్' : 'Admin'}>
               👑
             </Link>
