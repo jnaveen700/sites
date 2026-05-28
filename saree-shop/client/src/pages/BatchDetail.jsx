@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { useCart } from '../context/CartContext';
 import { API_BASE_URL } from '../config/api';
+import { getImageUrl } from '../utils/image';
 import '../styles/SareeDetail.css';
 
 export default function BatchDetail() {
@@ -80,17 +81,17 @@ export default function BatchDetail() {
   }
 
   const images = Array.isArray(batch.images) ? batch.images : [];
-  const currentImage = images[selectedImageIndex] || '📷';
+  const currentImage = getImageUrl(images[selectedImageIndex]);
 
   return (
     <div className="detail-page">
       <div className="detail-container">
         <div className="detail-image-section">
           <div className="main-image">
-            {typeof currentImage === 'string' && currentImage.startsWith('data:') ? (
+            {currentImage !== '/placeholder.jpg' ? (
               <img src={currentImage} alt={batch.title} />
             ) : (
-              <div className="image-placeholder">{currentImage}</div>
+              <div className="image-placeholder">📷</div>
             )}
           </div>
 
@@ -102,10 +103,10 @@ export default function BatchDetail() {
                   className={`thumbnail ${idx === selectedImageIndex ? 'active' : ''}`}
                   onClick={() => setSelectedImageIndex(idx)}
                 >
-                  {typeof img === 'string' && img.startsWith('data:') ? (
-                    <img src={img} alt={`View ${idx + 1}`} />
+                  {getImageUrl(img) !== '/placeholder.jpg' ? (
+                    <img src={getImageUrl(img)} alt={`View ${idx + 1}`} />
                   ) : (
-                    img
+                    <span aria-hidden="true">📷</span>
                   )}
                 </div>
               ))}

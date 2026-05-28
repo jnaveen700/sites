@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
 import { clearAuthSession, getAuthHeaders } from '../../utils/auth';
+import { getImageUrl } from '../../utils/image';
 import '../../styles/EditSaree.css';
 
 export default function EditSaree({ sareeId, onComplete }) {
@@ -439,13 +440,13 @@ export default function EditSaree({ sareeId, onComplete }) {
             <div className="images-section">
               <h3>{isTelugu ? 'ప్రస్తుత చిత్రాలు' : 'Current Images'}</h3>
               <div className="image-previews">
-                {images.map(img => (
-                  <div key={img.public_id} className="image-preview-item">
-                    <img src={img.url} alt="Current" />
+                {images.map((img, index) => (
+                  <div key={img?.public_id || img?._id || getImageUrl(img) || index} className="image-preview-item">
+                    <img src={getImageUrl(img)} alt="Current" />
                     <button
                       type="button"
                       className="remove-image"
-                      onClick={() => removeExistingImage(img.public_id)}
+                      onClick={() => removeExistingImage(img?.public_id || img?._id)}
                     >
                       ✕
                     </button>

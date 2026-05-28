@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { API_BASE_URL } from '../config/api';
 import { useCart } from '../context/CartContext';
+import { getImageUrl } from '../utils/image';
 import '../styles/ShoppingCart.css';
 
 export default function ShoppingCart() {
@@ -121,8 +122,11 @@ export default function ShoppingCart() {
                     <div className="item-product">
                       <div className="product-image">
                         {saree.images && saree.images[0] && (
-                          <img src={saree.images[0].url} alt={saree.designName} />
-                        )}
+                        <img
+                          src={getImageUrl(saree.images?.[0])}
+                          alt={saree.designName}
+                        />
+                      )}
                       </div>
                       <div className="product-info">
                         <h3>{saree.designName}</h3>

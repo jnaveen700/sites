@@ -1,4 +1,5 @@
 import { useLanguage } from '../../hooks/useLanguage';
+import { getImageUrl } from '../../utils/image';
 import '../../styles/BatchCard.css';
 
 export default function BatchCard({ batch, onViewDetails }) {
@@ -34,7 +35,7 @@ export default function BatchCard({ batch, onViewDetails }) {
         {/* Main Image */}
         <div className="card-image">
           {batch.images && batch.images.length > 0 ? (
-            <img src={batch.images[0].url} alt={batch.title || 'Batch'} />
+            <img src={getImageUrl(batch.images[0])} alt={batch.title || 'Batch'} />
           ) : (
             <div className="no-image-placeholder">📸</div>
           )}

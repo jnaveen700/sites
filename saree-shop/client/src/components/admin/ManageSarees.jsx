@@ -2,6 +2,7 @@ import { API_BASE_URL } from '../../config/api';
 import { useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
+import { getImageUrl } from '../../utils/image';
 import { clearAuthSession, getAuthHeaders } from '../../utils/auth';
 import '../../styles/ManageSarees.css';
 
@@ -215,7 +216,10 @@ export default function ManageSarees({ onEdit }) {
               {/* Image */}
               <div className="card-image">
                 {saree.images && saree.images.length > 0 ? (
-                  <img src={saree.images[0].url} alt={saree.designName} />
+                  <img
+                    src={getImageUrl(saree.images?.[0])}
+                    alt={saree.designName}
+                  />
                 ) : (
                   <div className="no-image">📷</div>
                 )}

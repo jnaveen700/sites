@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../hooks/useLanguage';
 import { API_BASE_URL } from '../config/api';
+import { getImageUrl } from '../utils/image';
 import '../styles/SareeDetail.css';
 
 export default function SareeDetail() {
@@ -58,6 +59,7 @@ export default function SareeDetail() {
   const discount = saree ? Math.round(((otherPrice - currentPrice) / otherPrice) * 100) : 0;
   const isNewDrop = saree && new Date() - new Date(saree.createdAt) < 7 * 24 * 60 * 60 * 1000;
   const stockStatus = saree?.stock > 15 ? 'in-stock' : saree?.stock > 0 ? 'limited' : 'out-of-stock';
+  const images = Array.isArray(saree?.images) ? saree.images : [];
 
   if (loading) {
     return (
@@ -103,10 +105,9 @@ export default function SareeDetail() {
             {discount > 0 && <div className="discount-badge">{discount}% OFF</div>}
             
             <img
-              src={saree.images[selectedImageIndex]?.url || 'https://via.placeholder.com/500'}
+              src={getImageUrl(images[selectedImageIndex])}
               alt={saree.designName}
             />
-
             {/* STOCK STATUS OVERLAY */}
             <div className={`stock-status ${stockStatus}`}>
               {stockStatus === 'in-stock' && (isTelugu ? '✓ స్టాక్‌లో' : '✓ In Stock')}
@@ -116,19 +117,23 @@ export default function SareeDetail() {
           </div>
 
           {/* IMAGE THUMBNAILS */}
-          {saree.images.length > 1 && (
+          {images.length > 1 && (
             <div className="thumbnails">
-              {saree.images.map((img, index) => (
+              {images.map((img, index) => (
                 <button
                   key={index}
                   className={`thumbnail ${index === selectedImageIndex ? 'active' : ''}`}
                   onClick={() => setSelectedImageIndex(index)}
                 >
-                  <img src={img.url} alt={`${saree.designName} ${index + 1}`} />
+                  <img
+                    src={getImageUrl(img)}
+                    alt={`${saree.designName} ${index + 1}`}
+                  />
                 </button>
               ))}
             </div>
           )}
+
         </section>
 
         {/* DETAILS SECTION */}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLanguage } from '../../hooks/useLanguage';
+import { getImageUrl } from '../../utils/image';
 import '../../styles/SareeCard.css';
 
 export default function SareeCard({
@@ -98,7 +99,10 @@ export default function SareeCard({
         {/* Main Image */}
         <div className="card-image">
           {saree.images && saree.images.length > 0 ? (
-            <img src={saree.images[0].url} alt={saree.designName} />
+            <img
+              src={getImageUrl(saree.images?.[0])}
+              alt={saree.designName}
+            />
           ) : (
             <div className="no-image-placeholder">📷</div>
           )}
